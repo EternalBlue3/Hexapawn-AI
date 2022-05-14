@@ -123,7 +123,7 @@ red_pawn = pygame.transform.scale(pygame.image.load("red_pawn.png"), tile_size)
 set_pawns()
 
 pygame.display.update()
-print(board)
+fps_controller.tick(1)
 
 while True:
     for event in pygame.event.get():
@@ -138,28 +138,21 @@ while True:
                 pygame.quit()
                 sys.exit()
                 
-    time.sleep(1)
     move = random.choice(get_possible_moves(board,"blue"))
-    print(move)
     board = make_move(board,move,"blue")
-    print(board)
-    time.sleep(0.5)
+    pygame.display.update()
     if check_for_win(board):
         print("Blue Wins!")
         pygame.quit()
         sys.exit()
-    pygame.display.update()
-    time.sleep(1)
+    fps_controller.tick(1)
     move = random.choice(get_possible_moves(board,"red"))
-    print(move)
     board = make_move(board,move,"red")
     pygame.display.update()
-    print(board)
-    time.sleep(0.5)
     if check_for_win(board):
         print("Red Wins!")
         pygame.quit()
         sys.exit()
             
     pygame.display.update()
-    fps_controller.tick(60)
+    fps_controller.tick(1)
