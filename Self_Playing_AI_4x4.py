@@ -104,7 +104,32 @@ def check_for_win(board,player):
             return True
     return False
 
+TRANSPOSITION_TABLE = {}
+
+def store(table, board, alpha, beta, best, depth):
+    if best[1] <= alpha:
+        flag = 'UPPERCASE'
+    elif best[1] >= beta:
+        flag = 'LOWERCASE'
+    else:
+        flag = 'EXACT'
+
+    table[str(board)] = [best, flag, depth]
+
 def negamax(board_, depth, turn, alpha, beta):
+    alpha_org = alpha
+    if str(board_) in TRANSPOSITION_TABLE:
+        tt_entry = TRANSPOSITION_TABLE[str(board_)]
+        if tt_entry[2] >= depth:
+            if tt_entry[1] == 'EXACT':
+                return tt_entry[0]
+            elif tt_entry[1] == 'LOWERCASE':
+                alpha = max(alpha, tt_entry[0][1])
+            elif tt_entry[1] == 'UPPERCASE':
+                beta = min(beta, tt_entry[0][1])
+
+            if alpha >= beta:
+                return tt_entry[0]
     
     if check_for_win(board_, neg_switch_player(turn)): return None, -(16+depth)
     if depth == 0: return get_possible_moves(board_,turn)[0], (depth)
@@ -118,6 +143,8 @@ def negamax(board_, depth, turn, alpha, beta):
             best_score, best_move = score, move
         if alpha >= beta:
             break
+            
+    store(TRANSPOSITION_TABLE, board_, alpha_org, beta, [best_move,best_score], depth)
             
     return best_move, best_score
 
