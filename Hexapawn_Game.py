@@ -1,4 +1,4 @@
-import pygame, sys, time, random
+import pygame, sys, random
 
 pygame.init()
 red = pygame.Color(255,0,0)
@@ -7,7 +7,6 @@ black = pygame.Color(0,0,0)
 pygame.display.set_caption('Hexapawn AI')
 width, height = 600,600
 game_window = pygame.display.set_mode((width, height))
-current_player = "blue"
 
 def opposite(num,middle):
     if num == middle:
@@ -16,15 +15,6 @@ def opposite(num,middle):
         return middle - 0.5*num
     if num < middle:
         return num + 2*middle
-    
-def switch_player():
-    global current_player
-    if current_player == "red":
-        current_player = "blue"
-        return None
-    if current_player == "blue":
-        current_player = "red"
-        return None
 
 def set_pawns():
     global game_window, bs, board
@@ -42,46 +32,43 @@ def build_lines():
         pygame.draw.line(game_window, black, (0, height/bs * x), (width, height/bs * x), 7)
 
 def get_possible_moves(board,player):
-    global bs
     possible_moves = []
-    if player == "blue":
-        player = "BP"
+    if player == "BP":
         forward = 1
-    if player == "red":
-        player = "RP"
+    if player == "RP":
         forward = -1
     
-    for y in range(bs):
-        for x in range(bs):
+    for y in range(3):
+        for x in range(3):
             if board[y][x] == player:
-                
-                if board[y+forward][x] == " ":
-                    possible_moves.append([x,y,x,y+forward])
-                    
                 if player == "BP":
-                    if x-1 != -1:
+                    if x-1 != -1 and y+forward != 3:
                         if board[y+forward][x-1] == "RP":
                             possible_moves.append([x,y,x-1,y+forward])
-                    if x+1 != 3:
+                    if x+1 != 3 and y+forward != 3:
                         if board[y+forward][x+1] == "RP":
                             possible_moves.append([x,y,x+1,y+forward])
                             
+                    if y+1 != 3:
+                        if board[y+forward][x] == " ":
+                            possible_moves.append([x,y,x,y+forward])
+                            
                 if player == "RP":
-                    if x-1 != -1:
+                    if x-1 != -1 and y+forward != 3:
                         if board[y+forward][x-1] == "BP":
                             possible_moves.append([x,y,x-1,y+forward])
-                    if x+1 != 3:
+                    if x+1 != 3 and y+forward != 3:
                         if board[y+forward][x+1] == "BP":
                             possible_moves.append([x,y,x+1,y+forward])
+                            
+                    if y+1 != -1:
+                        if board[y+forward][x] == " ":
+                            possible_moves.append([x,y,x,y+forward])
                     
     return possible_moves
 
 def make_move(board,move,player):
-    global game_window, bs, width, height
-    if player == "blue":
-        player = "BP"
-    if player == "red":
-        player = "RP"
+    global game_window, width, height
     game_window.fill(white)
     build_lines()
     board[move[1]][move[0]] = " "
@@ -89,15 +76,17 @@ def make_move(board,move,player):
     set_pawns()
     return board
 
-def check_for_win(board):
-    if "RP" in board[0]:
-        return True
-    if "BP" in board[2]:
-        return True
-    if get_possible_moves(board,"blue") == []:
-        return True
-    if get_possible_moves(board,"red") == []:
-        return True
+def check_for_win(board,player):
+    if player == "RP":
+        if "RP" in board[0]:
+            return True
+        if get_possible_moves(board,"BP") == []:
+            return True
+    if player == "BP":
+        if "BP" in board[2]:
+            return True
+        if get_possible_moves(board,"RP") == []:
+            return True
     return False
 
 # Build board
@@ -127,7 +116,7 @@ fps_controller.tick(1)
 
 while True:
     for event in pygame.event.get():
-  
+
       # if user clicks the X or they type esc then the screen will close
         if event.type == pygame.QUIT:
             pygame.quit()
@@ -137,22 +126,26 @@ while True:
             if event.key == pygame.K_ESCAPE:
                 pygame.quit()
                 sys.exit()
-                
-    move = random.choice(get_possible_moves(board,"blue"))
-    board = make_move(board,move,"blue")
+    
+    move = random.choice(get_possible_moves(board,"BP"))
+    board = make_move(board,move,"BP")
     pygame.display.update()
-    if check_for_win(board):
+    
+    if check_for_win(board,"BP"):
         print("Blue Wins!")
         pygame.quit()
         sys.exit()
+    
     fps_controller.tick(1)
-    move = random.choice(get_possible_moves(board,"red"))
-    board = make_move(board,move,"red")
+    
+    move = random.choice(get_possible_moves(board,"RP"))
+    board = make_move(board,move,"RP")
     pygame.display.update()
-    if check_for_win(board):
+    
+    if check_for_win(board,"RP"):
         print("Red Wins!")
         pygame.quit()
         sys.exit()
-            
+    
     pygame.display.update()
     fps_controller.tick(1)
