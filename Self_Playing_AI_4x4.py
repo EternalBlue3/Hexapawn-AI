@@ -1,4 +1,4 @@
-import pygame, sys, time
+import pygame, sys
 from copy import deepcopy
 
 pygame.init()
@@ -159,9 +159,7 @@ while True:
                 pygame.quit()
                 sys.exit()
     
-    starttime = time.time()
     move = negamax(board,20,"BP",-10000,10000)[0]
-    print(time.time()-starttime)
     board = make_move(board,move,"BP")
     pygame.display.update()
     
@@ -172,9 +170,7 @@ while True:
     
     fps_controller.tick(1)
     
-    starttime = time.time()
     move = negamax(board,20,"RP",-10000,10000)[0]
-    print(time.time()-starttime)
     board = make_move(board,move,"RP")
     pygame.display.update()
     
