@@ -18,10 +18,10 @@ def opposite(num,middle):
         return num + 2*middle
     
 def neg_switch_player(player):
-    if player == "red":
-        return "blue"
+    if player == "RP":
+        return "BP"
     else:
-        return "red"
+        return "RP"
 
 def set_pawns():
     global game_window, bs, board
@@ -39,17 +39,14 @@ def build_lines():
         pygame.draw.line(game_window, black, (0, height/bs * x), (width, height/bs * x), 7)
 
 def get_possible_moves(board,player):
-    global bs
     possible_moves = []
-    if player == "blue":
-        player = "BP"
+    if player == "BP":
         forward = 1
-    if player == "red":
-        player = "RP"
+    if player == "RP":
         forward = -1
     
-    for y in range(bs):
-        for x in range(bs):
+    for y in range(3):
+        for x in range(3):
             if board[y][x] == player:
                 if player == "BP":
                     if x-1 != -1 and y+forward != 3:
@@ -78,11 +75,7 @@ def get_possible_moves(board,player):
     return possible_moves
 
 def make_move(board,move,player):
-    global game_window, bs, width, height
-    if player == "blue":
-        player = "BP"
-    if player == "red":
-        player = "RP"
+    global game_window, width, height
     game_window.fill(white)
     build_lines()
     board[move[1]][move[0]] = " "
@@ -90,54 +83,41 @@ def make_move(board,move,player):
     set_pawns()
     return board
 
-def neg_make_move(board,move,player):
-    if player == "blue":
-        player = "BP"
-    if player == "red":
-        player = "RP"
+def neg_make_move(new_board,move,player):
+    board = deepcopy(new_board)
     board[move[1]][move[0]] = " "
     board[move[3]][move[2]] = player
     return board
 
 def check_for_win(board,player):
-    if player == "blue":
-        player = "BP"
-    if player == "red":
-        player = "RP"
-    
     if player == "RP":
         if "RP" in board[0]:
             return True
-        if get_possible_moves(board,"blue") == []:
+        if get_possible_moves(board,"BP") == []:
             return True
     if player == "BP":
         if "BP" in board[2]:
             return True
-        if get_possible_moves(board,"red") == []:
+        if get_possible_moves(board,"RP") == []:
             return True
     return False
 
-def negamax(board_, depth, turn):
+def negamax(board_, depth, turn, alpha, beta):
     
-    if check_for_win(board_, turn): return None, (9+depth)  # Return positive score if maximizing player
+    if check_for_win(board_, neg_switch_player(turn)): return None, -(9+depth)
+    if depth == 0: return get_possible_moves(board_,turn)[0], (depth)
     
-    if check_for_win(board_, neg_switch_player(turn)): return None, -(9 + depth)  # Return negative score if minimizing player wins
+    best_score = -200
     
-    if depth == 0: return get_possible_moves(board_,turn)[0], (4+depth)
-    
-    best_score = -20  # Initiate with less than smallest possible score
-    
-    for move in get_possible_moves(board_,turn):  # Go through all empty squares on board
-        
-        board_ = deepcopy(board_)
-        board_ = neg_make_move(board_,move,turn)
-        
-        score = -negamax(board_, depth - 1, neg_switch_player(turn))[1]  # Recursive call to go through all child nodes
-        
-        if score > best_score: 
-            best_score, best_move = score, move  # If score is larger than previous best, update score
+    for move in get_possible_moves(board_,turn):
+        score = -negamax(neg_make_move(board_,move,turn), depth - 1, neg_switch_player(turn), -beta, -alpha)[1]
+        alpha = max(alpha,score)
+        if score > best_score:
+            best_score, best_move = score, move
+        if alpha >= beta:
+            break
             
-    return best_move, best_score  # Return the best move and its corresponding score
+    return best_move, best_score
 
 # Build board
 bs = 3 # bs = Board Size
@@ -166,7 +146,7 @@ fps_controller.tick(1)
 
 while True:
     for event in pygame.event.get():
-  
+
       # if user clicks the X or they type esc then the screen will close
         if event.type == pygame.QUIT:
             pygame.quit()
@@ -177,22 +157,22 @@ while True:
                 pygame.quit()
                 sys.exit()
     
-    move = negamax(board,10,"blue")[0]
-    board = make_move(board,move,"blue")
+    move = negamax(board,10,"BP",-10000,10000)[0]
+    board = make_move(board,move,"BP")
     pygame.display.update()
     
-    if check_for_win(board,"blue"):
+    if check_for_win(board,"BP"):
         print("Blue Wins!")
         pygame.quit()
         sys.exit()
     
     fps_controller.tick(1)
     
-    move = negamax(board,10,"red")[0]
-    board = make_move(board,move,"red")
+    move = negamax(board,10,"RP",-10000,10000)[0]
+    board = make_move(board,move,"RP")
     pygame.display.update()
     
-    if check_for_win(board,"red"):
+    if check_for_win(board,"RP"):
         print("Red Wins!")
         pygame.quit()
         sys.exit()
