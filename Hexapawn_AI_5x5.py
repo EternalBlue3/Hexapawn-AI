@@ -199,7 +199,7 @@ while True:
                 pygame.quit()
                 sys.exit()
     
-    move = solve(board,22,1,-10000,10000)[0]
+    move = solve(board,220,1,-10000,10000)[0] # Depth is large enough that the program searches through the entire game. Modify the depth to increase or decrease strength.
     board = make_move(board,move,1)
     pygame.display.update()
     
@@ -210,7 +210,7 @@ while True:
     
     fps_controller.tick(1)
     
-    move = solve(board,22,-1,-10000,10000)[0]
+    move = solve(board,220,-1,-10000,10000)[0]
     board = make_move(board,move,-1)
     pygame.display.update()
     
