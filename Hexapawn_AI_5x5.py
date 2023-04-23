@@ -1,32 +1,26 @@
-import pygame, sys
-from copy import deepcopy
-from collections import OrderedDict
-
 # Blue Pawn = 1
 # Red Pawn = -1
 
+import pygame, sys, time, math
+from copy import deepcopy
+from collections import OrderedDict
+
 pygame.init()
-red = pygame.Color(255,0,0)
 white = pygame.Color(255,255,255)
-black = pygame.Color(0,0,0)
+
 pygame.display.set_caption('Hexapawn AI')
-width, height = 600,600
+width, height = 605,605
 game_window = pygame.display.set_mode((width, height))
 
-def set_pawns():
-    global game_window, board
-    for y in range(5):
-        for x in range(5):
-            if board[y][x] == 1:
-                game_window.blit(blue_pawn,((width/5)*x,(height/5)*(4-y)))
-            if board[y][x] == -1:
-                game_window.blit(red_pawn,((width/5)*x,(height/5)*(4-y)))
-
-def build_lines():
+def set_pawns(board):
     global game_window
-    for x in range(1,5):
-        pygame.draw.line(game_window, black,(width/5 * x, 0),(width/5 * x, height),7)
-        pygame.draw.line(game_window, black,(0, height/5 * x),(width, height/5 * x),7)
+    for y, row in enumerate(board):
+        for x, pawn in enumerate(row):
+            if pawn == 1:
+                game_window.blit(blue_pawn,((width/5)*x,(height/5)*(4-y)))
+            if pawn == -1:
+                game_window.blit(red_pawn,((width/5)*x,(height/5)*(4-y)))
+    pygame.display.update()
 
 def get_possible_moves(board,player):
     possible_moves = []
@@ -47,7 +41,7 @@ def get_possible_moves(board,player):
                         if board[y+forward][x] == 0:
                             possible_moves.append([x,y,x,y+forward])
                             
-                if player == -1:
+                elif player == -1:
                     if x-1 != -1 and y+forward != 5:
                         if board[y+forward][x-1] == 1:
                             possible_moves.append([x,y,x-1,y+forward])
@@ -62,12 +56,11 @@ def get_possible_moves(board,player):
     return possible_moves
 
 def make_move(board,move,player):
-    global game_window, width, height
-    game_window.fill(white)
-    build_lines()
+    global BG_Image
+    game_window.blit(BG_Image,(0,0))
     board[move[1]][move[0]] = 0
     board[move[3]][move[2]] = player
-    set_pawns()
+    set_pawns(board)
     return board
 
 def neg_make_move(new_board,move,player):
@@ -88,6 +81,11 @@ def check_for_win(board,player):
         if get_possible_moves(board,-1) == []:
             return True
     return False
+
+def get_player_move(mouse_x, mouse_y):
+    column = 4 - mouse_y // 121
+    row = mouse_x // 121
+    return row, column
 
 ########## AI ##########
 class LRUCache(OrderedDict):
@@ -113,8 +111,8 @@ def get_tt_entry(value, UB=False, LB=False):
     return {'value': value, 'UB': UB, 'LB': LB}
 
 def solve(board, depth, turn, alpha, beta):
-    TT = LRUCache(4194304)
-    best_score = -200
+    TT = LRUCache(16777216)
+    best_score = -math.inf
     
     for move in get_possible_moves(board,turn):
         score = -negamax(neg_make_move(board,move,turn), depth - 1, -turn, -beta, -alpha, TT)
@@ -144,7 +142,7 @@ def negamax(board, depth, turn, alpha, beta, TT):
     if check_for_win(board, -turn): return -(16+depth)
     if depth == 0: return depth
     
-    best_score = -200
+    best_score = -math.inf
     
     for move in get_possible_moves(board,turn):
         score = -negamax(neg_make_move(board,move,turn), depth - 1, -turn, -beta, -alpha, TT)
@@ -163,61 +161,96 @@ def negamax(board, depth, turn, alpha, beta, TT):
     
     return best_score
 
-# Build board
-board = [[1 for x in range(5)]]
-for x in range(3):
-    board.append([0 for x in range(5)])
-board.append([-1 for x in range(5)])
-
+# Define board, fps_controller, background, and pawns
+board = [[1,1,1,1,1],[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0],[-1,-1,-1,-1,-1]]
 fps_controller = pygame.time.Clock()
-game_window.fill(white)
 
-# Draw game board lines
-build_lines()
+# Set Background Image
+BG_Image = pygame.image.load('Hexapawn_Background.png')
+game_window.blit(BG_Image,(0,0))
 
 # Load sprites with correct sizes
 tile_size = (width/5,height/5)
-blue_pawn = pygame.transform.scale(pygame.image.load("blue_pawn.png"), tile_size)
-red_pawn = pygame.transform.scale(pygame.image.load("red_pawn.png"), tile_size)
+blue_pawn = pygame.transform.scale(pygame.image.load("blue_pawn_2.png"), tile_size)
+red_pawn = pygame.transform.scale(pygame.image.load("red_pawn_2.png"), tile_size)
 
 # Draw the pawns to the board
-set_pawns()
+set_pawns(board)
+pygame.display.flip()
 
-pygame.display.update()
-fps_controller.tick(1)
+def main():
+    global board
+    move_dictionary = [(0,0), (1,0), (2,0), (3,0), (4,0), (0,1), (1,1), (2,1), (3,1), (4,1), (0,2), (1,2), (2,2), (3,2), (4,2), (0,3), (1,3), (2,3), (3,3), (4,3), (0,4), (1,4), (2,4), (3,4), (4,4)]
+    current_player = 1
+    player_move = []
+    while True:
+        for event in pygame.event.get():
 
-while True:
-    for event in pygame.event.get():
-
-      # if user clicks the X or they type esc then the screen will close
-        if event.type == pygame.QUIT:
-            pygame.quit()
-            sys.exit()
-            
-        if event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_ESCAPE:
+          # if user clicks the X or they type esc then the screen will close
+            if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
-    
-    move = solve(board,220,1,-10000,10000)[0] # Depth is large enough that the program searches through the entire game. Modify the depth to increase or decrease strength.
-    board = make_move(board,move,1)
-    pygame.display.update()
-    
-    if check_for_win(board,1):
-        print("Blue Wins!")
-        pygame.quit()
-        sys.exit()
-    
-    fps_controller.tick(1)
-    
-    move = solve(board,220,-1,-10000,10000)[0]
-    board = make_move(board,move,-1)
-    pygame.display.update()
-    
-    if check_for_win(board,-1):
-        print("Red Wins!")
-        pygame.quit()
-        sys.exit()
-    
-    pygame.display.update()
-    fps_controller.tick(1)
+
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    pygame.quit()
+                    sys.exit()
+
+            if event.type == pygame.MOUSEBUTTONDOWN and current_player == -1:
+                mouseX, mouseY = pygame.mouse.get_pos()
+                moves = get_possible_moves(board,-1)
+                playerX,playerY = get_player_move(mouseX,mouseY)
+
+                if len(player_move) == 2:
+                    if any(player_move[0] == x[0] and player_move[1] == x[1] and playerX == x[2] and playerY == x[3] for x in moves):
+                        player_move.append(playerX)
+                        player_move.append(playerY)
+                    else:
+                        player_move = [] # Redefine player move
+                        game_window.blit(BG_Image,(0,0)) # Remove transparent circles
+                        set_pawns(board) # Remove transparent circles
+
+                if len(player_move) == 0:
+                    if any(playerX == x[0] and playerY == x[1] for x in moves):
+                        player_move.append(playerX)
+                        player_move.append(playerY)
+
+                    for x in moves:
+                        if playerX == x[0] and playerY == x[1]:
+                            transparency_surface = pygame.Surface((width,height), pygame.SRCALPHA)
+                            pygame.draw.circle(transparency_surface,(220,220,220,200),(x[2]*121+61,(4-x[3])*121+61),19,width=0)
+                            game_window.blit(transparency_surface, (0,0))
+                    pygame.display.update()
+
+                if len(player_move) == 4:
+                    if player_move in get_possible_moves(board,-1):
+                        board = make_move(board,player_move,-1)
+                        player_move, current_player = [], 1
+                        pygame.display.update()
+
+                if check_for_win(board,-1):
+                    print("Red Wins!")
+                    time.sleep(5)
+                    pygame.quit()
+                    sys.exit()
+
+        if current_player == 1:
+            start = time.time()
+            move = solve(board,80,1,-10000,10000)
+            print("Move: ",move[0],"    Score: ",move[1])
+            print("Time to generate move:",time.time()-start,"\n")
+            board = make_move(board,move[0],1)
+
+            if check_for_win(board,1):
+                print("Blue Wins!")
+                time.sleep(5)
+                pygame.quit()
+                sys.exit()
+
+            current_player = -1
+
+        pygame.display.update()
+        fps_controller.tick(18)
+        
+if __name__ == '__main__':
+    main()
