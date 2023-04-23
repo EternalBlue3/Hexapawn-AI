@@ -40,13 +40,13 @@ board = [[1,1,1,1,1],[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0],[-1,-1,-1,-1,-1]]
 fps_controller = pygame.time.Clock()
 
 # Set Background Image
-BG_Image = pygame.image.load('./Assets/Hexapawn_Background.png')
+BG_Image = pygame.image.load('./assets/Hexapawn_Background.png')
 game_window.blit(BG_Image,(0,0))
 
 # Load sprites with correct sizes
 tile_size = (width/5,height/5)
-blue_pawn = pygame.transform.scale(pygame.image.load("./Assets/blue_pawn.png"), tile_size)
-red_pawn = pygame.transform.scale(pygame.image.load("./Assets/red_pawn.png"), tile_size)
+blue_pawn = pygame.transform.scale(pygame.image.load("./assets/blue_pawn.png"), tile_size)
+red_pawn = pygame.transform.scale(pygame.image.load("./assets/red_pawn.png"), tile_size)
 
 # Draw the pawns to the board
 set_pawns(board)
