@@ -6,4 +6,4 @@ This is a 5x5 hexapawn AI that I started working on a while ago, and just came b
 - Make a home screen where the play can select whether to play as red or blue (player 1 or 2)
 - Precompute a beginning move dictionary because my attention span can't handle waiting 8s for it to calculate the first move
 
-Run the Hexapawn.py file to play the game.
+Run the Hexapawn.py file to play the game. Note: This code requires the pygame library.
