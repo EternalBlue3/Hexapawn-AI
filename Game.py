@@ -43,3 +43,8 @@ def check_for_win(board,player):
         if get_possible_moves(board,-1) == []:
             return True
     return False
+
+def translate_player_move(mouse_x, mouse_y):
+    column = 4 - mouse_y // 121
+    row = mouse_x // 121
+    return row, column
