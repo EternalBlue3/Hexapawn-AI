@@ -1,9 +1,13 @@
-import math
+import math, json
 from copy import deepcopy
 from collections import OrderedDict
+from ast import literal_eval
 from Game import get_possible_moves, check_for_win
 
-def neg_make_move(new_board,move,player):
+def load_dict():
+    return json.loads(''.join(open("Dictionary.txt","r").readlines()))
+
+def negamax_make_move(new_board,move,player):
     board = deepcopy(new_board)
     board[move[1]][move[0]] = 0
     board[move[3]][move[2]] = player
@@ -31,12 +35,15 @@ class LRUCache(OrderedDict):
 def get_tt_entry(value, UB=False, LB=False):
     return {'value': value, 'UB': UB, 'LB': LB}
 
-def solve(board, depth, turn, alpha, beta):
+def solve(board, depth, turn, alpha, beta, turns_taken, dictionary):
+    if turns_taken <= 2:
+        return literal_eval(dictionary[str(board)])
+    
     TT = LRUCache(16777216)
     best_score = -math.inf
     
     for move in get_possible_moves(board,turn):
-        score = -negamax(neg_make_move(board,move,turn), depth - 1, -turn, -beta, -alpha, TT)
+        score = -negamax(negamax_make_move(board,move,turn), depth - 1, -turn, -beta, -alpha, TT)
         alpha = max(alpha,score)
         if score > best_score:
             best_score, best_move = score, move
@@ -66,7 +73,7 @@ def negamax(board, depth, turn, alpha, beta, TT):
     best_score = -math.inf
     
     for move in get_possible_moves(board,turn):
-        score = -negamax(neg_make_move(board,move,turn), depth - 1, -turn, -beta, -alpha, TT)
+        score = -negamax(negamax_make_move(board,move,turn), depth - 1, -turn, -beta, -alpha, TT)
         alpha = max(alpha,score)
         if score > best_score:
             best_score = score
