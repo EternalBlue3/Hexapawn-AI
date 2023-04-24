@@ -1,13 +1,9 @@
-# Blue Pawn = 1
-# Red Pawn = -1
-
 import pygame, sys, time
-from Game import get_possible_moves, check_for_win
-from AI import solve
+from Game import get_possible_moves, check_for_win, translate_player_move
+from AI import solve, load_dict
 
 pygame.init()
 white = pygame.Color(255,255,255)
-
 pygame.display.set_caption('Hexapawn AI')
 width, height = 605,605
 game_window = pygame.display.set_mode((width, height))
@@ -30,11 +26,6 @@ def make_move(board,move,player):
     set_pawns(board)
     return board
 
-def get_player_move(mouse_x, mouse_y):
-    column = 4 - mouse_y // 121
-    row = mouse_x // 121
-    return row, column
-
 # Define board, fps_controller, background, and pawns
 board = [[1,1,1,1,1],[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0],[-1,-1,-1,-1,-1]]
 fps_controller = pygame.time.Clock()
@@ -52,16 +43,24 @@ red_pawn = pygame.transform.scale(pygame.image.load("./assets/red_pawn.png"), ti
 set_pawns(board)
 pygame.display.flip()
 
+# Show users possible moves with transparent circle
+def show_player_moves(game_window, width, height, x, y):
+    transparency_surface = pygame.Surface((width,height), pygame.SRCALPHA)
+    pygame.draw.circle(transparency_surface,(220,220,220,200),(x*121+61,(4-y)*121+61),19,width=0)
+    game_window.blit(transparency_surface, (0,0))
+
 def main():
     global board
     
     current_player = 1
     player_move = []
+    turns_taken = 0
+    dictionary = load_dict()
     
     while True:
         for event in pygame.event.get():
 
-          # if user clicks the X or they type esc then the screen will close
+            # if user clicks the X or they type esc then the screen will close
             if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
@@ -74,8 +73,10 @@ def main():
             if event.type == pygame.MOUSEBUTTONDOWN and current_player == -1:
                 mouseX, mouseY = pygame.mouse.get_pos()
                 moves = get_possible_moves(board,-1)
-                playerX,playerY = get_player_move(mouseX,mouseY)
+                playerX,playerY = translate_player_move(mouseX,mouseY) # Translate from X,Y to board position
 
+                # Check where to draw possible moves, and make sure the player can't make an illegal move
+                # Also make sure only the correct possible moves are shown for the player
                 if len(player_move) == 2:
                     if any(player_move[0] == x[0] and player_move[1] == x[1] and playerX == x[2] and playerY == x[3] for x in moves):
                         player_move.append(playerX)
@@ -92,26 +93,26 @@ def main():
 
                     for x in moves:
                         if playerX == x[0] and playerY == x[1]:
-                            transparency_surface = pygame.Surface((width,height), pygame.SRCALPHA)
-                            pygame.draw.circle(transparency_surface,(220,220,220,200),(x[2]*121+61,(4-x[3])*121+61),19,width=0)
-                            game_window.blit(transparency_surface, (0,0))
-                    pygame.display.update()
+                            show_player_moves(game_window,width,height,x[2],x[3])
 
                 if len(player_move) == 4:
                     if player_move in get_possible_moves(board,-1):
                         board = make_move(board,player_move,-1)
-                        player_move, current_player = [], 1
-                        pygame.display.update()
+                        player_move = []
+                        current_player = 1
+                        turns_taken += 1
 
                 if check_for_win(board,-1):
                     print("Red Wins!")
                     time.sleep(5)
                     pygame.quit()
                     sys.exit()
+                    
+                pygame.display.update()
 
         if current_player == 1:
             start = time.time()
-            move = solve(board,80,1,-10000,10000)
+            move = solve(board,80,1,-10000,10000,turns_taken,dictionary)
             print("Move: ",move[0],"    Score: ",move[1])
             print("Time to generate move:",time.time()-start,"\n")
             board = make_move(board,move[0],1)
@@ -123,6 +124,7 @@ def main():
                 sys.exit()
 
             current_player = -1
+            turns_taken += 1
 
         pygame.display.update()
         fps_controller.tick(18)
