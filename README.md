@@ -6,3 +6,5 @@ A while ago, I started working on a 5x5 Hexapawn AI, and just recently returned 
 - Improve the beginning move dictionary
 
 Run the Hexapawn.py file to play the game. Note: This code requires the pygame library.
+
+![Screenshot 2023-04-26 10 22 08 AM](https://user-images.githubusercontent.com/100178397/234605854-849f1e61-2a1b-44cd-95cb-d0bad615a7e1.png)
