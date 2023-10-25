@@ -18,14 +18,14 @@ def get_possible_moves(board,player):
                             possible_moves.append([x,y,x,y+forward])
                             
                 elif player == -1:
-                    if x-1 != -1 and y+forward != 5:
+                    if x-1 != -1 and y+forward != -1:
                         if board[y+forward][x-1] == 1:
                             possible_moves.append([x,y,x-1,y+forward])
-                    if x+1 != 5 and y+forward != 5:
+                    if x+1 != 5 and y+forward != -1:
                         if board[y+forward][x+1] == 1:
                             possible_moves.append([x,y,x+1,y+forward])
                             
-                    if y+1 != -1:
+                    if y-1 != -1:
                         if board[y+forward][x] == 0:
                             possible_moves.append([x,y,x,y+forward])
                     
