@@ -35,7 +35,7 @@ def get_tt_entry(value, UB=False, LB=False):
     return {'value': value, 'UB': UB, 'LB': LB}
 
 def solve(board, depth, turn, alpha, beta, turns_taken, dictionary):
-    if turns_taken <= 2:
+    if turns_taken <= 3:
         return literal_eval(dictionary[str(board)])
     
     TT = LRUCache(16777216)
