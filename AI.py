@@ -31,8 +31,8 @@ class LRUCache(OrderedDict):
             oldest = next(iter(self))
             del self[oldest]
             
-def get_tt_entry(value, UB=False, LB=False):
-    return {'value': value, 'UB': UB, 'LB': LB}
+def get_tt_entry(value, depth, UB=False, LB=False):
+    return {'value': value, 'depth': depth, 'UB': UB, 'LB': LB}
 
 def solve(board, depth, turn, alpha, beta, turns_taken, dictionary):
     if turns_taken <= 3:
@@ -43,11 +43,8 @@ def solve(board, depth, turn, alpha, beta, turns_taken, dictionary):
     
     for move in get_possible_moves(board,turn):
         score = -negamax(negamax_make_move(board,move,turn), depth - 1, -turn, -beta, -alpha, TT)
-        alpha = max(alpha,score)
         if score > best_score:
             best_score, best_move = score, move
-        if alpha >= beta:
-            break
                 
     return best_move, best_score
 
@@ -57,16 +54,17 @@ def negamax(board, depth, turn, alpha, beta, TT):
     
     if board_string in TT:
         entry = TT[board_string]
-        if entry['LB']:
-            alpha = max(alpha, entry['value'])  # lower bound stored in TT
-        elif entry['UB']:
-            beta = min(beta, entry['value'])    # upper bound stored in TT
-        else:
-            return entry['value']               # exact value stored in TT
-        if alpha >= beta:
-            return entry['value']               # cut-off (from TT)
+        if entry['depth'] >= depth:
+            if entry['LB']:
+                alpha = max(alpha, entry['value'])  # lower bound stored in TT
+            elif entry['UB']:
+                beta = min(beta, entry['value'])    # upper bound stored in TT
+            else:
+                return entry['value']               # exact value stored in TT
+            if alpha >= beta:
+                return entry['value']               # cut-off (from TT)
     
-    if check_for_win(board, -turn): return -(16+depth)
+    if check_for_win(board, -turn): return -(depth+1)
     if depth == 0: return depth
     
     best_score = -math.inf
@@ -80,10 +78,10 @@ def negamax(board, depth, turn, alpha, beta, TT):
             break
                 
     if best_score <= alpha_original:
-        TT[board_string] = get_tt_entry(best_score, UB=True)
+        TT[board_string] = get_tt_entry(best_score, depth, UB=True)
     elif best_score >= beta:
-        TT[board_string] = get_tt_entry(best_score, LB=True)
+        TT[board_string] = get_tt_entry(best_score, depth, LB=True)
     else:
-        TT[board_string] = get_tt_entry(best_score)       # store exact in TT
+        TT[board_string] = get_tt_entry(best_score, depth)       # store exact in TT
     
     return best_score
